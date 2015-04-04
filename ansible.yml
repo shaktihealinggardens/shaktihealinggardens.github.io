@@ -1,0 +1,32 @@
+---
+- hosts: all
+  sudo: true
+  tasks:
+    - name: install dependencies
+      apt: name={{ item }} state=present update_cache=true
+      with_items:
+        - apache2
+        - libapache2-mod-php5
+        - php5-curl
+        - php5-imagick
+        - imagemagick
+        - git
+        - vim
+    - name: create apache virtual host
+      template: >
+        src=apache.conf
+        dest=/etc/apache2/sites-enabled/phptest.conf
+        owner=root
+        group=root
+        mode=0644
+      notify:
+        - restart apache
+    - name: remove default apache virtual host
+      file: >
+        path=/etc/apache2/sites-enabled/000-default.conf
+        state=absent
+      notify:
+        - restart apache
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
